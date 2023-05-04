@@ -1,0 +1,102 @@
+﻿@*@model List<SelectListItem>*@
+@{
+    Layout = "";
+}
+@*<div class="script-tag">
+    <script>
+        function renderShippingOptionInfo(param) {
+            if (param != "") {
+                var _url = '/SelectedShippingPoint/Get?shippingOptionId=' + param;
+                var xhttp = new XMLHttpRequest();
+                xhttp.open("GET", _url, true);
+                xhttp.send();
+                xhttp.onreadystatechange = function () {
+                    if (this.readyState == 4 && this.status == 200) {
+                        document.getElementById("shippingOptionInfo").innerHTML = this.responseText;
+                    }
+                };
+            }
+            else {
+                document.getElementById("shippingOptionInfo").innerHTML = "";
+            }
+        }
+    </script>
+</div>
+
+<h6>@Loc["Shipping.ShippingPoint.ChooseShippingPoint"]</h6>
+<select class="form-control" name="data[selectedShippingOption]" onchange="renderShippingOptionInfo(value)">
+    @foreach (var shippingOption in Model)
+    {
+        <option value="@shippingOption.Value">@shippingOption.Text</option>
+    }
+</select>
+
+<div id="shippingOptionInfo"></div>*@
+
+<div id="shippingOptionInfo"></div>
+
+<iframe frameBorder="0" style="width: 100%; min-height: 500px;" title="Výběr místa pro vyzvednutí zásilky"
+        src="https://b2c.cpost.cz/locations/?type=BALIKOVNY"
+        allow="geolocation"
+        id="CPostFrame"></iframe>
+
+<input name="data[selectedShippingOptionId]" id="CPostPickupPointId" type="hidden" />
+<input name="data[selectedShippingOptionDescription]" id="CPostPickupPointDescription" type="hidden" />
+<input name="data[selectedShippingOptionObject]" id="CPostPickupPointObject" type="hidden" />
+  
+<div class="script-tag">
+    <script>
+        var shippingFrame = document.getElementById("CPostFrame");
+
+        function changeSelectedPoint() {
+            show(shippingFrame);
+        }
+
+        window.onmessage = function cPostHandler(event) {
+            if (event.data.message === 'pickerResult') {
+                console.log(event.data);
+
+                document.getElementById("CPostPickupPointId").value = event.data.point.id;
+                if (event.data.point.subtype == 'POSTA') {
+                    document.getElementById("CPostPickupPointDescription").value = 'Pošta: ' + event.data.point.address;
+                }
+                else {
+                    document.getElementById("CPostPickupPointDescription").value = event.data.point.name + ' (' + event.data.point.address + ')';
+                }
+                document.getElementById("CPostPickupPointObject").value = JSON.stringify(event.data.point);
+
+                document.getElementById("shippingOptionInfo").innerHTML = '<div class="alert alert-info" role="alert">' +
+                    '@Loc["Shipping.CPost.ShippingPointName"]: ' +
+                    document.getElementById("CPostPickupPointDescription").value +
+                    '<div class="btn btn-sm btn-info" style="margin-left: 10px;" onclick="javascript:changeSelectedPoint();">Změnit</div>' +
+                    '</div>';
+
+                hide(shippingFrame);
+            }
+        };
+
+        // Show an element
+        var show = function (elem) {
+            elem.style.display = 'block';
+        };
+
+        // Hide an element
+        var hide = function (elem) {
+            elem.style.display = 'none';
+        };
+
+        // Toggle element visibility
+        var toggle = function (elem) {
+
+            // If the element is visible, hide it
+            if (window.getComputedStyle(elem).display === 'block') {
+                hide(elem);
+                return;
+            }
+
+            // Otherwise, show it
+            show(elem);
+
+        };
+    </script>
+</div>
